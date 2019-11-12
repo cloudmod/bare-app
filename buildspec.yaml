@@ -1,0 +1,25 @@
+version: 0.2
+phases:
+  install:
+    commands:
+      - npm i -g aws-cdk
+      - cd $CODEBUILD_SRC_DIR
+      - npm i
+    finally:
+      - echo "Install phase finished"
+  build:
+    commands:
+      - cd $CODEBUILD_SRC_DIR
+      - npm run build
+    finally:
+      - echo "Build phase finished"
+  post_build:
+    commands:
+      - cd $CODEBUILD_SRC_DIR
+      - cdk synth > $CODEBUILD_SRC_DIR/template.yaml
+      - echo "{}" > $CODEBUILD_SRC_DIR/template-configuration.json
+artifacts:
+  files:
+    - template.yaml
+    - template-configuration.json
+  discard-paths: no

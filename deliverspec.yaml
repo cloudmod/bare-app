@@ -1,0 +1,32 @@
+version: 0.2
+phases:
+  install:
+    commands:
+      - apt-get update -y
+      - apt-get install -y jq
+      - pip install --upgrade pip
+      - pip install --upgrade awscli
+      - cd $CODEBUILD_SRC_DIR
+      - npm i
+    finally:
+      - echo "Install phase finished"
+  pre_build:
+    commands: 
+      - echo "Fetching bucket name"
+      - bucket_name=$(aws cloudformation describe-stacks --stack-name ${STACK_NAME} | jq -r '.Stacks[0].Outputs[] | select(.OutputKey == "WebUiBucketName") | .OutputValue')
+  build:
+    commands:
+      - cd $CODEBUILD_SRC_DIR
+      - # bash scripts/configure-ui.sh ${STACK_NAME}
+      - npm run build
+    finally:
+      - echo "Build phase finished"
+  post_build:
+    commands:
+      - aws s3 cp --recursive dist/ s3://$bucket_name/
+    finally: 
+      - echo "Post build phase finished"
+artifacts:
+  files:
+    - dist/*
+  discard-paths: no
